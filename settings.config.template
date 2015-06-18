@@ -1,0 +1,8 @@
+[API]
+MY_API_KEY = (insert api key here)
+
+[MEDIA]
+media = [1,2]
+
+[PLACES]
+places = [8878461,8878645,8878503]
