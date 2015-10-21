@@ -1,7 +1,7 @@
-import mediacloud
-import json
-import time
+import json, time, sys, logging, os
 from datetime import date
+
+import mediacloud
 
 #OUTPUT FORMAT:
 # [{
@@ -14,39 +14,59 @@ from datetime import date
 #			{weekly_pct}
 # }]}]
 
-###CONFIG###
+# Load settings
+
+CONFIG_FILE = 'settings.config'
+base_dir = os.path.dirname(os.path.realpath(__file__))
+
+logging.basicConfig(level=logging.INFO)
+
+logging.info("Loading settings from %s" % CONFIG_FILE)
 from ConfigParser import SafeConfigParser
 parser = SafeConfigParser()
 parser.read('settings.config')
-place_ids = parser.get('PLACES','places')
-media_ids = parser.get('MEDIA','media')
+place_ids = json.loads(parser.get('query','geonames_ids'))
+media_ids = json.loads(parser.get('query','media_ids'))
+logging.info("Looking at %d media sources" % len(media_ids))
 
-##API SETUP##
-MY_API_KEY = parser.get('API','MY_API_KEY')
-mc = mediacloud.api.MediaCloud(MY_API_KEY)
+# Connect to MediaCloud
+mc_api_key = parser.get('mediacloud','api_key')
+mc = mediacloud.api.MediaCloud( mc_api_key )
+logging.info("Connected to MC as %s" % mc_api_key)
 
-###SETTINGS###
 start_date = '2015-01-01'
 end_date = str(date.today())
+logging.info("Timespan from %s to %s" % (start_date,end_date))
 
-###GET NAMES###
+# get sentences counts over time for each media source
+logging.info("Fetching basic media info...")
+media_info_list = [ mc.media(media_id) for media_id in media_ids] 
+logging.info("  done")
+
+logging.info("Fetching media sentence counts...")
+for media_info in media_info_list:
+	counts_over_time = mc.sentenceCount('media_id:'+str(media_info['media_id']),split=True,
+		split_start_date=start_date,split_end_date=end_date)
+	del(counts_over_time['split']['start'])
+	del(counts_over_time['split']['end'])
+	del(counts_over_time['split']['gap'])
+	media_info['sentenceCounts'] = counts_over_time
+
+logging.info("  done")
+
+'''
 places = []
-media = []
-place_ids = place_ids.strip('[')
-place_ids = place_ids.strip(']')
-place_ids = place_ids.split(',')
-media_ids = media_ids.strip('[')
-media_ids = media_ids.strip(']')
-media_ids = media_ids.split(',')
-
 for id in place_ids:
 	place_name = mc.tag(id)['label']
 	places.append([place_name,id])
-for id in media_ids:
-	media_name = mc.media(id)['name']
-	media.append([media_name,id])
-	
+'''	
 
+output_file_path = os.path.join(base_dir,'static','data','media_sentence_counts.json')
+with open( output_file_path, 'w') as outfile:
+	json.dump(media_info_list, outfile)
+logging.info("Wrote results to %s" % output_file_path)
+
+'''
 ###NORMALIZER###
 def normalize(place_id,media_id):
     weekly_pct = {}
@@ -91,3 +111,4 @@ def assemble():
 	return json_results
 	
 assemble()
+'''

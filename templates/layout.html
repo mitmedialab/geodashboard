@@ -3,22 +3,32 @@
 
 	<head>
 		<meta charset="utf-8">
-		<title>GeoDashboard</title> 
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css"> <!-- Optional bootstrap theme -->
-		<script type="text/javascript" src="static/js/d3.min.js"></script>
+		<title>Media Coverage Dashboard</title> 
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"/> 
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css"/>
+		<script type="text/javascript" src="static/js/jquery-1.11.3.min.js"></script>
+		<script type="text/javascript" src="static/js/highcharts.js"></script>
 	</head>
 
 	<body>
+
 		<header>
 			<div class="container-fluid">
-				<h1 class="logo">GeoDashboard</h1>
+				<h1 class="logo">Media Coverage Dashboard</h1>
 				<br>
 			</div>
 		</header> 
+
 		<div class="container-fluid">
 			{% block content %}		
 			{% endblock %}
 		</div>
+
+	{% block scripts %}		
+	{% endblock %}
+
+	<br />
+	<br />
+
 	</body>
 </html>

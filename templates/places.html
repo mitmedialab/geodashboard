@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+	.sparkline {
+		fill: none;
+		stroke: teal;
+		stroke-width: 1.5px;
+	}
+	.sparkcircle {
+		fill: darkblue;
+		stroke: none;
+	}
+	.datetext {
+		font-size: 9px;
+		fill: DimGray;
+		font-weight: bold;
+	}
+	.maxtext {
+		font-size: 11px;
+		font-weight:bold;
+		fill: FireBrick;
+	}
+</style>
+
+<script src="../static/js/d3/d3.v3.js"></script>
+<script>	
+function getValues(data) {
+	var values = [];
+	for (var key in data){
+		values.push(data[key]); }
+	};
+
+var width = 400;
+var height = 150;
+var x = d3.time.scale().range([0, width]);
+var y = d3.scale.linear().range([height - 20, 10]);
+var parseDate = d3.time.format("%Y-%m-%dT%H:%M:%SZ").parse; 
+var prettyDate = d3.time.format("%x")
+var line = d3.svg.line() 
+	.interpolate("monotone")
+	.x(function(d) { return x(d.date); })  
+	.y(function(d) { return y(d.pct); });  
+
+function addSparkline(cellId, data) {
+	var cleandata = [];
+	for (item in data) { 
+		item_date = parseDate(item); 
+		item_pct = data[item];
+		cleandata.push({'date':item_date, 'pct':item_pct});
+	}; 
+	
+	var numdates = cleandata.length;
+		
+	x.domain(d3.extent(cleandata, function(d) { return d.date; })); 
+	//y.domain([0, d3.max(cleandata, function(d) { return d.pct; })]);  
+	y.domain([0,15]);
+	
+	var ymax = d3.max(cleandata, function(d) { return d.pct; });
+	for (item in cleandata) {
+		if (cleandata[item]['pct'] == ymax) {
+			var xmax = cleandata[item]['date'];   
+	}};
+	
+	var ymaxround = ymax.toFixed(2);
+
+	var svg = d3.select('#'+cellId)
+		.append('svg')
+		.attr('width', width)
+		.attr('height', height)
+		.append('g') 
+		.attr('transform', 'translate(0, 3)');
+	svg.append('path')
+		.datum(cleandata)
+		.attr('class', 'sparkline')
+		.attr('d', line);
+	svg.append('circle')
+		.attr('class', 'sparkcircle')
+		.attr('cx', x(xmax))
+		.attr('cy', y(ymax))
+		.attr('r', 3.25);
+	svg.append('text')
+		.attr('class', 'maxtext')
+		.text(ymaxround)
+		.attr('x', (x(xmax)+4))
+		.attr('y', (y(ymax)-4));
+	svg.append('text')
+		.text(prettyDate(cleandata[0]['date']))
+		.attr('class', 'datetext')
+		.attr('x', 0)
+		.attr('y', (height-5));
+	svg.append('text')
+		.attr('class', 'datetext')
+		.text(prettyDate(cleandata[numdates-1]['date']))
+		.attr('x', width-47)
+		.attr('y', (height-5));
+	};
+	
+</script> 
+
+	<div class = "row">
+		<div class = "col-md-12">
+			<table class="table">
+				<tr>
+				<th></th>
+				{% for item in data[0].media %}
+					<th> {{item['media_name']}}</th>
+				{% endfor %}
+				</tr>
+				{% for place in data %} 
+				<tr>
+					<th> 
+					{{place['place_name']}} 
+					</th>
+					{% for media in place['media'] %} 
+						<td id=media_{{media['media_id']}}-{{place['place_id']}}>
+						<script type=text/javascript>
+							addSparkline("media_{{media['media_id']}}-{{place['place_id']}}", {{media['counts']|tojson|safe}});
+						</script>
+						</td>
+					{% endfor %}	
+				{% endfor %}
+				</tr>	
+			</table>	
+		</div>
+	</div>
+	
+{% endblock %}
