@@ -1,4 +1,4 @@
-import json, ast, os
+import json, ast, os, logging
 
 from flask import Flask, render_template
 
@@ -6,12 +6,19 @@ base_dir = os.path.dirname(os.path.realpath(__file__))
 
 app = Flask(__name__)
 
+log_file_path = os.path.join(base_dir,'logs','geodashboard.log')
+logging.basicConfig(filename=log_file_path,level=logging.DEBUG)
+logging.info("Starting up!")
+
 @app.route('/')
 def home():
+	logging.debug("home")
 	file_path = os.path.join(base_dir,'static','data','media_sentence_counts.json')
+	logging.debug("loaded file")
 	data = []
 	with open(file_path,'r') as data_file:
 		data = json.load(data_file)
+	logging.debug("loaded data")
 	return render_template('home.html', media_list=data)  
 
 @app.route('/places')
