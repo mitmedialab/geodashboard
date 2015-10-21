@@ -1,8 +1,6 @@
-[API]
-MY_API_KEY = (insert api key here)
+[mediacloud]
+api_key = API_KEY_HERE
 
-[MEDIA]
-media = [1,2]
-
-[PLACES]
-places = [8878461,8878645,8878503]
+[query]
+media_ids = [1, 2, 3]
+geonames_ids = [8885617,9055727]
