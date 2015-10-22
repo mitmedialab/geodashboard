@@ -3,6 +3,9 @@
 {% block content %}
 
 	<h2>Total Sentences</h2>
+	<p>There are {{totals['sentences']}} total, 
+	around {{(totals['highlightedSentences']/totals['sentences'] * 100) | round | int}}% mention a place in {{highlighted_tag['label']}} 
+	(that's {{totals['highlightedSentences']}} sentences).</p>
 	<div id="combined-media-sentence-chart"></div>
 
 	<hr />
@@ -23,16 +26,22 @@
 
 	<script>
 	allSeries = []
-	function drawChart(containerId,mediaName,dataDictionary){
+
+	function dataDictToList(dataDict){
 		dataList = []
-		$.each(dataDictionary, function(key){
-			dataList.push([Date.parse(key), dataDictionary[key]]);
+		$.each(dataDict, function(key){
+			dataList.push([Date.parse(key), dataDict[key]]);
 		});
+		return dataList;
+	}
+	function drawChart(containerId,mediaName,dataDictionary, highlightedDataDictionary){
+		highlightedDataList = dataDictToList(highlightedDataDictionary);
+		dataList = dataDictToList(dataDictionary);
 		$('#'+containerId).highcharts({
 			chart: {
 				type: 'line',
 				backgroundColor: '#ffffff',
-				height: 150
+				height: 100
 			},
 			title: {
 				title: '',
@@ -48,11 +57,18 @@
 			legend: {
 				enabled: false
 			},
-			series: [{
-				name: 'sentences',
-				color: '#20B1B8',
-				data: dataList
-			}]
+			plotOptions: {
+            	line: {
+                	marker: {
+	                    radius: 2,
+	                    symbol: "circle"
+	                }
+                }
+            },
+			series: [
+				{name: 'sentences', color: '#20B1B8', data: dataList}
+				, {name: 'sentences mentioning {{highlighted_tag['label']}} ', color: '#cccccc', data: highlightedDataList}
+			]
 		});
 		allSeries.push({name:mediaName,data:dataList});
 	};
@@ -92,7 +108,12 @@
 	}
 	$(function(){
 		{% for media in media_list %} 
-			drawChart("media-{{media['media_id']}}-sentence-chart","{{media['name']}}",{{media['sentenceCounts']['split']|tojson|safe}});
+			drawChart(
+				"media-{{media['media_id']}}-sentence-chart",
+				"{{media['name']}}",
+				{{media['sentenceCounts']['split']|tojson|safe}},
+				{{media['highlightedSentenceCounts']['split']|tojson|safe}}
+			);
 		{% endfor %}
 		drawCombinedChart();
 	});

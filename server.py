@@ -19,7 +19,8 @@ def home():
 	with open(file_path,'r') as data_file:
 		data = json.load(data_file)
 	logging.debug("loaded data")
-	return render_template('home.html', media_list=data)  
+	return render_template('home.html', media_list=data['mediaInfo'], 
+		highlighted_tag=data['highlightedTag'], totals=data['total'])  
 
 @app.route('/places')
 def places():

@@ -25,7 +25,8 @@ logging.info("Loading settings from %s" % CONFIG_FILE)
 from ConfigParser import SafeConfigParser
 parser = SafeConfigParser()
 parser.read('settings.config')
-place_ids = json.loads(parser.get('query','geonames_ids'))
+highlighted_geonames_tag_id = parser.get('query','highlight_geonames_tags_id')
+geonames_tags_ids = json.loads(parser.get('query','geonames_tags_ids'))
 media_ids = json.loads(parser.get('query','media_ids'))
 logging.info("Looking at %d media sources" % len(media_ids))
 
@@ -43,27 +44,43 @@ logging.info("Fetching basic media info...")
 media_info_list = [ mc.media(media_id) for media_id in media_ids] 
 logging.info("  done")
 
+total_sentences = 0
+total_highlighted_sentences = 0
+
 logging.info("Fetching media sentence counts...")
 for media_info in media_info_list:
-	counts_over_time = mc.sentenceCount('media_id:'+str(media_info['media_id']),split=True,
-		split_start_date=start_date,split_end_date=end_date)
+	counts_over_time = mc.sentenceCount('media_id:'+str(media_info['media_id']),
+		split=True,split_start_date=start_date,split_end_date=end_date)
 	del(counts_over_time['split']['start'])
 	del(counts_over_time['split']['end'])
 	del(counts_over_time['split']['gap'])
+	highlight_counts_over_time = mc.sentenceCount(
+		'tags_id_story_sentences:'+str(highlighted_geonames_tag_id)+' AND media_id:'+str(media_info['media_id']),
+		split=True,split_start_date=start_date,split_end_date=end_date)
+	del(highlight_counts_over_time['split']['start'])
+	del(highlight_counts_over_time['split']['end'])
+	del(highlight_counts_over_time['split']['gap'])
 	media_info['sentenceCounts'] = counts_over_time
-
+	media_info['highlightedSentenceCounts'] = highlight_counts_over_time
+	total_sentences = total_sentences + media_info['sentenceCounts']['count']
+	total_highlighted_sentences = total_highlighted_sentences + media_info['highlightedSentenceCounts']['count']
 logging.info("  done")
 
 '''
 places = []
-for id in place_ids:
+for id in geonames_tags_ids:
 	place_name = mc.tag(id)['label']
 	places.append([place_name,id])
 '''	
 
+results = {}
+results['highlightedTag'] = mc.tag(highlighted_geonames_tag_id)
+results['mediaInfo'] = media_info_list
+results['total'] = {'sentences':total_sentences, 'highlightedSentences': total_highlighted_sentences}
+
 output_file_path = os.path.join(base_dir,'static','data','media_sentence_counts.json')
 with open( output_file_path, 'w') as outfile:
-	json.dump(media_info_list, outfile)
+	json.dump(results, outfile)
 logging.info("Wrote results to %s" % output_file_path)
 
 '''

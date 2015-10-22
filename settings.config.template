@@ -3,4 +3,5 @@ api_key = API_KEY_HERE
 
 [query]
 media_ids = [1, 2, 3]
+highlight_geonames_tags_id = 8878484
 geonames_ids = [8885617,9055727]
